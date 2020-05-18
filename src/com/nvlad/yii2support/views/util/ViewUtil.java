@@ -112,7 +112,7 @@ public class ViewUtil {
         final ViewResolve viewResolve;
         try {
             if (callerClass.getName().endsWith("Controller") && ClassUtils.isClassInheritsOrEqual(callerClass, "\\yii\\base\\Controller", phpIndex)) {
-                viewResolve = resolveViewFromController(callerClass, value);
+                viewResolve = resolveViewFromController(callerClass, element);
             } else if (ClassUtils.isClassInheritsOrEqual(callerClass, "\\yii\\base\\View", phpIndex)) {
                 viewResolve = resolveViewFromView(element, value);
             } else if (ClassUtils.isClassInheritsOrEqual(callerClass, "\\yii\\base\\Widget", phpIndex)) {
@@ -240,11 +240,14 @@ public class ViewUtil {
     }
 
     @NotNull
-    private static ViewResolve resolveViewFromController(PhpClass clazz, String value) {
+    private static ViewResolve resolveViewFromController(PhpClass clazz, PsiElement element) {
         ViewResolve result = new ViewResolve(ViewResolveFrom.Controller);
+        result.application = YiiApplicationUtils.getApplicationName(element.getContainingFile());
+        String value = PhpUtil.getValue(element);
         final String classFQN = clazz.getFQN().replace('\\', '/');
         StringBuilder key = new StringBuilder("@app");
-        String path = deletePathPart(classFQN);
+        String path = classFQN.substring(classFQN.indexOf(result.application) + result.application.length());
+
         if (path.startsWith("/modules/")) {
             key.append("/modules");
             path = deletePathPart(path);
